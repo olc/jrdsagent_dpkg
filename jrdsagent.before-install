@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir -p /var/lib/jrds
 adduser --system --home /var/lib/jrds --no-create-home \
 	--ingroup nogroup --disabled-password --shell /usr/sbin/nologin \
 	jrds
