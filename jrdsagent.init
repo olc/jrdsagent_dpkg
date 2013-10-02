@@ -78,7 +78,7 @@ do_start()
 # 
 get_running() 
 {
-    return `ps -U $JRDSAGENT_USER --no-headers -f | egrep -e '(java|daemon)' | grep -c . `
+    return `ps -U $JRDSAGENT_USER --no-headers -f | egrep -e '(java|daemon)' | grep 'name=jrdsagent ' | grep -c . `
 }
 
 force_stop() 
