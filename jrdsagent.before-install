@@ -1,0 +1,6 @@
+#!/bin/bash
+
+adduser --system --home /var/lib/jrds --no-create-home \
+	--ingroup nogroup --disabled-password --shell /usr/sbin/nologin \
+	jrds
+chown jrds:adm /var/lib/jrds
