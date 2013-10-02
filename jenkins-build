@@ -1,0 +1,60 @@
+SCRIPT=$(mktemp /tmp/XXXXXX)
+TARGET_DIR=$(mktemp -d /opt/jenkins/tmp/XXXXXX)
+PACKAGE=jrdsagent
+TARGET_COMPONENT=jrds
+
+cat <<EOF >$SCRIPT
+#!/bin/bash -x
+
+apt-get install -y rubygems ruby1.8-dev curl git ca-certificates
+gem install fpm --no-ri --no-rdoc
+
+VERSION="1.$(date '+%Y%m%d%H%M')-1"
+
+mkdir -p chroot/usr/share/jrdsagent/
+mkdir -p chroot/var/lib/jrds
+mkdir -p chroot/etc/init.d
+
+git clone https://github.com/olc/jrdsagent_dpkg.git jrdsagent_dpkg || exit 1
+
+cp jrdsagent_dpkg/jrdsagent.init chroot/etc/init.d/jrdsagent && chmod +x chroot/etc/init.d/jrdsagent
+
+curl http://jrds.fr/jrdsagent/build/jrdsagent.jar -o chroot/usr/share/jrdsagent/jrdsagent.jar || exit 2
+
+/usr/local/bin/fpm -s dir -t deb -a all -n ${PACKAGE} -v \${VERSION} \
+    -d default-jre-headless -d daemon -d adduser \
+    --before-install jrdsagent_dpkg/jrdsagent.before-install \
+    --after-install jrdsagent_dpkg/jrdsagent.after-install \
+    -C chroot . || exit 3
+
+# Generate a .changes
+FAKESRC_DIR=${PACKAGE}-\${VERSION}
+mkdir -p \${FAKESRC_DIR}/debian
+echo "${PACKAGE} (\${VERSION}) stable; urgency=low"        >\${FAKESRC_DIR}/debian/changelog
+echo                                                      >>\${FAKESRC_DIR}/debian/changelog
+echo "  * Jenkins Automatic CI"                           >>\${FAKESRC_DIR}/debian/changelog
+echo                                                      >>\${FAKESRC_DIR}/debian/changelog
+echo " -- Hudson CI <hudson@$(hostname -f)>  \$(date -R)" >>\${FAKESRC_DIR}/debian/changelog
+
+echo "${PACKAGE}_\${VERSION}_all.deb net optional" >\${FAKESRC_DIR}/debian/files
+
+echo "Source: ${PACKAGE}"                            >\${FAKESRC_DIR}/debian/control
+echo "Section: net"                                  >>\${FAKESRC_DIR}/debian/control
+echo "Priority: optional"                            >>\${FAKESRC_DIR}/debian/control
+echo "Maintainer: Hudson CI <hudson@$(hostname -f)>" >>\${FAKESRC_DIR}/debian/control
+echo                                                 >>\${FAKESRC_DIR}/debian/control
+echo "Package: ${PACKAGE}"                           >>\${FAKESRC_DIR}/debian/control
+echo "Architecture: any"                             >>\${FAKESRC_DIR}/debian/control
+
+(cd \${FAKESRC_DIR} && dpkg-genchanges -B >../${PACKAGE}_\${VERSION}_all.changes)
+
+cp ${PACKAGE}_\${VERSION}_all.deb ${TARGET_DIR}/ || exit 4
+cp ${PACKAGE}_\${VERSION}_all.changes ${TARGET_DIR}/ || exit 5
+
+EOF
+
+pbuilder-wheezy-amd64 execute --bindmounts '/opt/jenkins' -- $SCRIPT
+
+# upload package (as non-signed)
+cd $TARGET_DIR
+dput -u $TARGET_COMPONENT *.changes
