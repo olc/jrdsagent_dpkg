@@ -2,3 +2,9 @@
 #   comment this out to observe /etc/security/limits.conf
 #   just in case your server is indeed loaded
 # MAXOPENFILES=4096
+
+# TCP Port
+# JRDSAGENT_PORT=2002
+
+# Protocol used to communicate with jrds server
+# JRDSAGENT_PROTO=rmi

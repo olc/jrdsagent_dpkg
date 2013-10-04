@@ -19,7 +19,7 @@ PIDFILE=/var/run/$NAME/jrdsagent.pid
 JRDSAGENT_USER=jrds
 JRDSAGENT_JAR=/usr/share/jrdsagent/jrdsagent.jar
 JRDSAGENT_PORT=2002
-JRDSAGENT_PROTO=jmx
+JRDSAGENT_PROTO=rmi
 JAVA=java
 
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
