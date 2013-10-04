@@ -1,0 +1,4 @@
+# OS LIMITS SETUP
+#   comment this out to observe /etc/security/limits.conf
+#   just in case your server is indeed loaded
+# MAXOPENFILES=4096
