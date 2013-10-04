@@ -1,3 +1,9 @@
 #!/bin/bash
 
-/etc/init.d/jrdsagent status >/dev/null || /etc/init.d/jrdsagent start
+if /etc/init.d/jrdsagent status >/dev/null ; then
+	ACTION=restart
+else
+	ACTION=start
+fi
+
+/etc/init.d/jrdsagent $ACTION
